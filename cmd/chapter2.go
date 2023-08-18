@@ -2,19 +2,23 @@ package cmd
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/sha3"
 )
 
 var chapter2Cmd = &cobra.Command{
 	Use:   "chapter2",
-	Short: "Demo code for chapter 2",
+	Short: "Demo code for chapter 2: 以太坊账户",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		client, err := ethclient.Dial("http://localhost:8545")
@@ -58,6 +62,35 @@ var chapter2Cmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		fmt.Println(pendingBalance) // 100000000000000000000
+
+		// 生成新钱包，需要导入go-ethereumcrypto包，该包提供用于生成随机私钥的GenerateKey方法。
+		privateKey, err := crypto.GenerateKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(`privateKey is:`, privateKey)
+		//然后可以通过导入golangcrypto/ecdsa包并使用FromECDSA方法将其转换为字节
+		privateKeyBytes := crypto.FromECDSA(privateKey)
+		fmt.Println(`privateKeyBytes is:`, hexutil.Encode(privateKeyBytes)[2:])
+		//这就是用于签署交易的私钥，将被视为密码，永远不应该被共享给别人，因为谁拥有它可以访问你的所有资产。
+		//由于公钥是从私钥派生的，因此go-ethereum的加密私钥具有一个返回公钥的Public方法
+		publicKey := privateKey.Public()
+		fmt.Println(`publicKey is:`, publicKey)
+		//将其转换为十六进制的过程与我们使用转化私钥的过程类似。 我们剥离了0x和前2个字符04，它始终是EC前缀，不是必需的
+		publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+		if !ok {
+			log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		}
+		publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
+		fmt.Println(`publicKeyBytes is:`, hexutil.Encode(publicKeyBytes)[4:])
+
+		//拥有公钥，就可以轻松生成你经常看到的公共地址。 为了做到这一点，go-ethereum加密包有一个PubkeyToAddress方法，它接受一个ECDSA公钥，并返回公共地址。
+		address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+		fmt.Println(`address is:`, address)
+		// 公共地址其实就是公钥的Keccak-256哈希，然后我们取最后40个字符（20个字节）并用“0x”作为前缀。 以下是使用 golang.org/x/crypto/sha3 的 Keccak256函数手动完成的方法。
+		hash := sha3.NewLegacyKeccak256()
+		hash.Write(publicKeyBytes[1:])
+		fmt.Println(`keccak-address is:`, hexutil.Encode(hash.Sum(nil)[12:]))
 	},
 }
 
