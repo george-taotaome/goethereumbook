@@ -28,10 +28,22 @@ useViper: true
 $ cobra-cli init
 $ go run main.go #run root command
 
-$ cobra-cli add chapter1
+# git
+$ echo "# goethereumbook" >> README.md
+$ git init
+# git add ...
+$ git commit -m "init"
+$ git branch -M main
+$ git remote add origin git@github.com:george-taotaome/goethereumbook.git
+$ git push -u origin main
+
+# chapter 1
 $ go get github.com/ethereum/go-ethereum/ethclient
-$ vim main.go
-$ go run .
+$ cobra-cli add chapter1
+$ go run main.go chapter1
+
+...
+
 ```
 
 
