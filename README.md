@@ -2,7 +2,7 @@
 
 ## Step
 ``` shell
-# 初始化客户端
+# 初始化以太坊客户端：ganache，简单，方便本地测试； geth：可以用其搭建私有节点或全节点
 $ npm install -g ganache-cli
 # 用于创建本地区块链以快速开发以太坊的工具
 # 文档看https://trufflesuite.com/ganache/

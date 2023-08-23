@@ -8,12 +8,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Client
 var chapter1Cmd = &cobra.Command{
 	Use:   "chapter1",
 	Short: "Demo code for chapter 1: 客户端",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := ethclient.Dial("http://localhost:8545")
+		client, err := ethclient.Dial("https://cloudflare-eth.com")
+		// client, err := ethclient.Dial("http://localhost:8545")
 		if err != nil {
 			log.Fatal(err)
 		}

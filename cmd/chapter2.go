@@ -24,11 +24,23 @@ var runWallet bool
 var runKeystore bool
 var runCheckAddress bool
 
+// Account
 var chapter2Cmd = &cobra.Command{
 	Use:   "chapter2",
 	Short: "Demo code for chapter 2: 以太坊账户",
 
 	Run: func(cmd *cobra.Command, args []string) {
+		// args参数在Run函数中表示非flag参数，而不是所有的命令行参数。如希望获取所有的命令行参数，包括flag和非flag参数，你可以使用cmd.Flags().Args()方法
+		// fmt.Println(args)
+		// fmt.Println("Flags: ", cmd.Flags())
+		// 获取flags的值
+		// fmt.Println("runAccount: ", cmd.Flags().Lookup("runAccount").Value.String())
+		// fmt.Println("Args: ", cmd.Flags().Args())
+		// 处理非flag参数
+		// for _, arg := range args {
+		// 	fmt.Printf("Non-flag argument: %s\n", arg)
+		// }
+
 		// client, err := ethclient.Dial("https://cloudflare-eth.com")
 		client, err := ethclient.Dial("http://localhost:8545")
 		if err != nil {
@@ -181,4 +193,6 @@ func init() {
 	chapter2Cmd.Flags().BoolVarP(&runWallet, "wallet", "w", false, "run wallet demo")
 	chapter2Cmd.Flags().BoolVarP(&runKeystore, "keystore", "k", false, "run keystore demo")
 	chapter2Cmd.Flags().BoolVarP(&runCheckAddress, "checkaddress", "c", false, "run check address demo")
+
+	// chapter2Cmd.MarkFlagRequired("account")
 }
