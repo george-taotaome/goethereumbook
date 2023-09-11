@@ -23,6 +23,7 @@ var runAccount bool
 var runWallet bool
 var runKeystore bool
 var runCheckAddress bool
+var accountAddress string
 
 // Account
 var chapter2Cmd = &cobra.Command{
@@ -47,10 +48,15 @@ var chapter2Cmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		// 账户余额
 		if runAccount {
 			// 以太坊上的账户要么是钱包地址要么是智能合约地址。
 			// 要使用go-ethereum的账户地址，您必须先将它们转化为go-ethereum中的common.Address类型。
-			account := common.HexToAddress("0xE280029a7867BA5C9154434886c241775ea87e53")
+			// fmt.Println("accountAddress: ", accountAddress)
+			if accountAddress == "" {
+				accountAddress = "0xE280029a7867BA5C9154434886c241775ea87e53"
+			}
+			account := common.HexToAddress(accountAddress)
 			// fmt.Println(account)              // 0xE280029a7867BA5C9154434886c241775ea87e53
 			// fmt.Println(account.Hex())        // 0xE280029a7867BA5C9154434886c241775ea87e53
 			// fmt.Println(account.Hash().Hex()) // 0x000000000000000000000000e280029a7867ba5c9154434886c241775ea87e53
@@ -193,6 +199,8 @@ func init() {
 	chapter2Cmd.Flags().BoolVarP(&runWallet, "wallet", "w", false, "run wallet demo")
 	chapter2Cmd.Flags().BoolVarP(&runKeystore, "keystore", "k", false, "run keystore demo")
 	chapter2Cmd.Flags().BoolVarP(&runCheckAddress, "checkaddress", "c", false, "run check address demo")
+
+	chapter2Cmd.Flags().StringVarP(&accountAddress, "address", "d", "", "account address")
 
 	// chapter2Cmd.MarkFlagRequired("account")
 }
