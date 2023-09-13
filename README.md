@@ -3,14 +3,15 @@
 ## Step
 ``` shell
 # 初始化以太坊客户端：ganache，简单，方便本地测试； geth：可以用其搭建私有节点或全节点
-$ npm install -g ganache-cli
+$ npm install -g ganache  #ganache-cli
 # 用于创建本地区块链以快速开发以太坊的工具
 # 文档看https://trufflesuite.com/ganache/
 # 也可直接使用UI客户端：https://github.com/trufflesuite/ganache-ui，较大
 # 运行ganache cli客户端
 # ganache-cli
 # 可以使用相同的助记词来生成相同序列的公开地址
-$ ganache-cli -m "much repair shock carbon improve miss forget sock include bullet interest solution"
+# ganache-cli -m "much repair shock carbon improve miss forget sock include bullet interest solution"
+$ ganache -m "much repair shock carbon improve miss forget sock include bullet interest solution"  #--detach
 
 # 开始
 $ mkdir goethereumbook
@@ -43,6 +44,32 @@ $ cobra-cli add chapter1
 $ go run main.go chapter1
 
 ...
+
+# 智能合约
+# 安装 solc  https://soliditylang.org/
+$ brew update
+$ brew tap ethereum/ethereum
+$ brew install solidity
+$ solc --version
+
+# 安装abigen工具, 学习更复杂的智能合约看truffle framework
+$ go get -u github.com/ethereum/go-ethereum
+$ cd $GOPATH/pkg/mod/github.com/ethereum/go-ethereum@v1.12.2
+$ make
+$ make devtools
+
+# Store.sol
+$ solc --abi contracts/Store.sol -o contracts/build --overwrite
+$ solc --bin contracts/Store.sol -o contracts/build --overwrite
+$ abigen --bin=contracts/build/Store.bin --abi=contracts/build/Store.abi --pkg=store --out=store/Store.go
+$ go run contract_deploy.go
+#搞不定，一直提示：2023/09/13 16:22:27 VM Exception while processing transaction: invalid opcode
+#先实践 truffle
+$ npm install -g truffle
+$ npm install -g ganache
+$ ganache -m "much repair shock carbon improve miss forget sock include bullet interest solution"  #--detach
+#最后确定是ganache-cli不给力，改用ganache后发布合约OK
+
 
 ```
 

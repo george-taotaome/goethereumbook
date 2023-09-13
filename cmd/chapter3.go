@@ -17,7 +17,8 @@ import (
 var runBlock bool
 var runTransaction bool
 var runTransfer bool
-var runTransferToken bool
+
+// var runTransferToken bool
 
 // Transaction
 var chapter3Cmd = &cobra.Command{
@@ -212,11 +213,6 @@ var chapter3Cmd = &cobra.Command{
 			fmt.Printf("tx sent: %s", signedTx.Hash().Hex()) // tx sent:
 		}
 
-		// ERC20 Token转账
-		if runTransferToken {
-
-		}
-
 	},
 }
 
@@ -226,5 +222,5 @@ func init() {
 	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "run block demo")
 	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "run transaction demo")
 	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo")
-	chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
+	// chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
 }
