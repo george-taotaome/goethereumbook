@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "yunlabs.com/goethereumbook/cmd"
+import "yunlabs.com/goethereumbook/cli/cmd"
 
 func main() {
 	cmd.Execute()

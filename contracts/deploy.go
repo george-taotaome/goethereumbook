@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"yunlabs.com/goethereumbook/store"
+	"yunlabs.com/goethereumbook/contracts/store"
 )
 
 func main() {
@@ -45,6 +45,7 @@ func main() {
 	}
 
 	auth := bind.NewKeyedTransactor(privateKey)
+	// auth := NewKeyedTransactorWithChainID(privateKey, big.NewInt(1337))
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)     // in wei
 	auth.GasLimit = uint64(300000) // in units
