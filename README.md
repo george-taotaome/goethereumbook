@@ -27,7 +27,7 @@ author: George Liu <george@yunlabs.com>
 license: MIT
 useViper: true
 $ cobra-cli init
-$ go run main.go #run root command
+$ go run cli/main.go #run root command
 
 # git
 $ echo "# goethereumbook" >> README.md
@@ -41,7 +41,7 @@ $ git push -u origin main
 # chapter 1
 $ go get github.com/ethereum/go-ethereum/ethclient
 $ cobra-cli add chapter1
-$ go run main.go chapter1
+$ go run cli/main.go chapter1
 
 ...
 
@@ -64,7 +64,7 @@ $ solc --bin contracts/Store.sol -o contracts/build --overwrite
 # 合并上面两步
 $ solc contracts/Store.sol --bin --abi --optimize -o ./contracts/build
 $ abigen --bin=contracts/build/Store.bin --abi=contracts/build/Store.abi --pkg=store --out=contracts/store/Store.go
-$ go run contract_deploy.go
+$ go run contract/deploy.go
 #搞不定，一直提示：2023/09/13 16:22:27 VM Exception while processing transaction: invalid opcode
 #先实践 truffle
 $ npm install -g truffle
