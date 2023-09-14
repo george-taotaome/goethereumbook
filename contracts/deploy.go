@@ -11,7 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"yunlabs.com/goethereumbook/contracts/store"
+	// "yunlabs.com/goethereumbook/contracts/store"
+	"yunlabs.com/goethereumbook/contracts/token"
 )
 
 func main() {
@@ -59,8 +60,19 @@ func main() {
 	auth.GasLimit = uint64(300000) // in units
 	auth.GasPrice = gasPrice
 
-	input := "1.0"
-	address, tx, instance, err := store.DeployStore(auth, client, input)
+	// input := "1.0"
+	// address, tx, instance, err := store.DeployStore(auth, client, input)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	auth.GasLimit = uint64(3000000) // in units，增加gas限额
+
+	name := "My Token"
+	symbol := "MTK"
+	decimals := uint8(18)
+	totalSupply := big.NewInt(1000000000000000000)
+	address, tx, instance, err := token.DeployToken(auth, client, name, symbol, decimals, totalSupply)
 	if err != nil {
 		log.Fatal(err)
 	}

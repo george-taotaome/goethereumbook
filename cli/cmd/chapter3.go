@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var curBlock int64
 var runBlock bool
 var runTransaction bool
 var runTransfer bool
@@ -118,7 +119,7 @@ var chapter3Cmd = &cobra.Command{
 
 			// 调用客户端的BlockByNumber方法来获得完整区块。您可以读取该区块的所有内容和元数据，例如，区块号，区块时间戳，区块摘要，区块难度以及交易列表等等。
 			// ganache cli客户端启动后，需要先执行go run main.go chapter3 -r，生成第一个区块1，才能查询到
-			blockNumber := big.NewInt(1)
+			blockNumber := big.NewInt(curBlock)
 			block, err := client.BlockByNumber(context.Background(), blockNumber)
 			if err != nil {
 				log.Fatal(err)
@@ -141,7 +142,7 @@ var chapter3Cmd = &cobra.Command{
 		// 查询 block =1 交易，应该安排在交易之后
 		// ganache cli客户端启动后，需要先执行go run main.go chapter3 -r，生成第一个区块1，才能查询到
 		if runTransaction {
-			blockNumber := big.NewInt(1)
+			blockNumber := big.NewInt(curBlock)
 			block, err := client.BlockByNumber(context.Background(), blockNumber)
 			if err != nil {
 				log.Fatal(err)
@@ -188,8 +189,8 @@ var chapter3Cmd = &cobra.Command{
 
 			// 在不获取块的情况下遍历事务的另一种方法是调用客户端的TransactionInBlock方法。 此方法仅接受块哈希和块内事务的索引值。 您可以调用TransactionCount来了解块中有多少个事务。
 			fmt.Println("TransactionInBlock", block.Hash().Hex()) // 0xe2e3e100b9da3c9bfa94955517285952311e7a23b0889cde1f571006a5f4e6ac
-			// blockHash := block.Hash()
-			blockHash := common.HexToHash("0xe2e3e100b9da3c9bfa94955517285952311e7a23b0889cde1f571006a5f4e6ac")
+			blockHash := block.Hash()
+			// blockHash := common.HexToHash("0xe2e3e100b9da3c9bfa94955517285952311e7a23b0889cde1f571006a5f4e6ac")
 			count, err := client.TransactionCount(context.Background(), blockHash)
 			if err != nil {
 				log.Fatal(err)
@@ -208,14 +209,14 @@ var chapter3Cmd = &cobra.Command{
 			}
 
 			// 还可以使用TransactionByHash在给定具体事务哈希值的情况下直接查询单个事务
-			txHash := common.HexToHash("0x3a950ff00503726679bac219a89abf3bb157cf4910cff18f36cc137c4a1e1e8e")
+			txHash := common.HexToHash("0xa6e572b4298eca0fe306f932c8a614974370a29d05c253e12527fb15930793e5")
 			tx, isPending, err := client.TransactionByHash(context.Background(), txHash)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			fmt.Println(tx.Hash().Hex()) // 0x3a950ff00503726679bac219a89abf3bb157cf4910cff18f36cc137c4a1e1e8e
-			fmt.Println(isPending)       // false
+			fmt.Println("tx: ", tx.Value(), tx.To())
+			fmt.Println(isPending) // false
 		}
 
 	},
@@ -224,9 +225,11 @@ var chapter3Cmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(chapter3Cmd)
 
-	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo")
-	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "run block demo")
-	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "run transaction demo")
+	chapter3Cmd.Flags().Int64VarP(&curBlock, "cur", "c", 1, "block number")
+
+	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo, generate block 1")
+	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "get block 1 info")
+	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "get transaction info from block 1")
 
 	// chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
 }

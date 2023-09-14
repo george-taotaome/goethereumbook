@@ -62,6 +62,8 @@ $ make devtools
 $ solc --abi contracts/Store.sol -o contracts/build --overwrite
 $ solc --bin contracts/Store.sol -o contracts/build --overwrite
 # 合并上面两步，需--optimize，不然提示Runtime error: code size to deposit exceeds maximum code size
+# 原因gas费太少，auth.GasLimit加多个0 OK
+# 单个交易可以执行的最大 gas 数量是 6,700,000，这对应于大约 250KB 的合约代码大小
 $ solc contracts/Store.sol --bin --abi --optimize -o ./contracts/build --overwrite
 $ abigen --bin=contracts/build/Store.bin --abi=contracts/build/Store.abi --pkg=store --out=contracts/store/Store.go
 $ go run contract/deploy.go
@@ -71,6 +73,10 @@ $ npm install -g truffle
 $ npm install -g ganache
 $ ganache -m "much repair shock carbon improve miss forget sock include bullet interest solution"  #--detach
 #最后确定是ganache-cli不给力，改用ganache后发布合约OK
+
+#创建一个ERC20智能合约
+$ solc contracts/ERC20.sol --bin --abi --optimize -o ./contracts/build
+$ abigen --bin=contracts/build/ERC20.bin --abi=contracts/build/ERC20.abi --pkg=token --out=contracts/token/ERC20.go
 
 
 ```
