@@ -57,7 +57,7 @@ func main() {
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)     // in wei
-	auth.GasLimit = uint64(300000) // in units
+	auth.GasLimit = uint64(300000) // in units, for Store
 	auth.GasPrice = gasPrice
 
 	// input := "1.0"
@@ -66,7 +66,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	auth.GasLimit = uint64(3000000) // in units，增加gas限额
+	auth.GasLimit = uint64(3000000) // in units，增加gas限额 for erc20, 6.1K需要多点gas
 
 	name := "My Token"
 	symbol := "MTK"
