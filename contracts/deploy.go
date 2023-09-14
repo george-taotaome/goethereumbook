@@ -44,8 +44,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// auth := bind.NewKeyedTransactor(privateKey)
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(1337))
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
 		log.Fatal(err)
 	}

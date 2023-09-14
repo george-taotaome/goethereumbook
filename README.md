@@ -61,8 +61,8 @@ $ make devtools
 # Store.sol
 $ solc --abi contracts/Store.sol -o contracts/build --overwrite
 $ solc --bin contracts/Store.sol -o contracts/build --overwrite
-# 合并上面两步
-$ solc contracts/Store.sol --bin --abi --optimize -o ./contracts/build
+# 合并上面两步，需--optimize，不然提示Runtime error: code size to deposit exceeds maximum code size
+$ solc contracts/Store.sol --bin --abi --optimize -o ./contracts/build --overwrite
 $ abigen --bin=contracts/build/Store.bin --abi=contracts/build/Store.abi --pkg=store --out=contracts/store/Store.go
 $ go run contract/deploy.go
 #搞不定，一直提示：2023/09/13 16:22:27 VM Exception while processing transaction: invalid opcode

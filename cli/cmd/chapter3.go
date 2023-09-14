@@ -32,6 +32,80 @@ var chapter3Cmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		// 生成block 1
+		// ETH转账：以太币数量，gas限额，gas价格，一个随机数(nonce)，接收地址以及可选择性的添加的数据
+		if runTransfer {
+			// 加载私钥
+			privateKey, err := crypto.HexToECDSA("f1b3f8e0d52caec13491368449ab8d90f3d222a3e485aa7f02591bbceb5efba5") // ganache-cli
+			// privateKey, err := crypto.HexToECDSA("294dae214d4ce7110a0024a565e736ace82ba9620d4a1a62548b7d4e97d38731") // ganache
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// 帐户的公共地址
+			publicKey := privateKey.Public()
+			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+			if !ok {
+				log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+			}
+
+			fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+			// 读取我们应该用于帐户交易的随机数
+			nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// 设置我们将要转移的ETH数量。
+			value := big.NewInt(1000000000000000000) // in wei (1 eth)
+
+			// ETH转账的燃气应设上限为“21000”单位。
+			gasLimit := uint64(21000) // in units
+
+			// 燃气价格必须以wei为单位设定。 在撰写本文时，将在一个区块中比较快的打包交易的燃气价格为30 gwei。
+			// gasPrice := big.NewInt(30000000000) // in wei (30 gwei)
+
+			// 然而，燃气价格总是根据市场需求和用户愿意支付的价格而波动的，因此对燃气价格进行硬编码有时并不理想。 go-ethereum客户端提供SuggestGasPrice函数，用于根据'x'个先前块来获得平均燃气价格。
+			gasPrice, err := client.SuggestGasPrice(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			toAddress := common.HexToAddress("0x68dB32D26d9529B2a142927c6f1af248fc6Ba7e9") // ganache-cli
+			// toAddress := common.HexToAddress("0x028EA99Fe457B9Ad405883b9f501cab9a267150F") // ganache
+
+			fmt.Println("tx is:", nonce, fromAddress, value, gasLimit, gasPrice, toAddress)
+			// 导入go-ethereumcore/types包并调用NewTransaction来生成我们的未签名以太坊事务，这个函数需要接收nonce，地址，值，燃气上限值，燃气价格和可选发的数据。
+			// 发送ETH的数据字段为“nil”。 在与智能合约进行交互时，我们将使用数据字段，仅仅转账以太币是不需要数据字段的。
+			tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
+
+			// 下一步是使用发件人的私钥对事务进行签名。
+			// 为此，我们调用SignTx方法，该方法接受一个未签名的事务和我们之前构造的私钥。 SignTx方法需要EIP155签名者，这个也需要我们先从客户端拿到链ID。
+			networkID, err := client.NetworkID(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+			chainID, err := client.ChainID(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("chainID: ", networkID, chainID)
+
+			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// 现在我们终于准备通过在客户端上调用“SendTransaction”来将已签名的事务广播到整个网络。
+			err = client.SendTransaction(context.Background(), signedTx)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("tx sent: %s", signedTx.Hash().Hex()) // tx sent:
+		}
+
 		// 查询区块
 		if runBlock {
 			// 调用客户端的HeaderByNumber来返回有关一个区块的头信息, 传入nil，它将返回最新的区块头
@@ -144,83 +218,15 @@ var chapter3Cmd = &cobra.Command{
 			fmt.Println(isPending)       // false
 		}
 
-		// ETH转账：以太币数量，gas限额，gas价格，一个随机数(nonce)，接收地址以及可选择性的添加的数据
-		if runTransfer {
-			// 加载私钥
-			privateKey, err := crypto.HexToECDSA("f1b3f8e0d52caec13491368449ab8d90f3d222a3e485aa7f02591bbceb5efba5") // ganache-cli
-			// privateKey, err := crypto.HexToECDSA("294dae214d4ce7110a0024a565e736ace82ba9620d4a1a62548b7d4e97d38731") // ganache
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// 帐户的公共地址
-			publicKey := privateKey.Public()
-			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-			if !ok {
-				log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-			}
-
-			fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-			// 读取我们应该用于帐户交易的随机数
-			nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// 设置我们将要转移的ETH数量。
-			value := big.NewInt(1000000000000000000) // in wei (1 eth)
-
-			// ETH转账的燃气应设上限为“21000”单位。
-			gasLimit := uint64(21000) // in units
-
-			// 燃气价格必须以wei为单位设定。 在撰写本文时，将在一个区块中比较快的打包交易的燃气价格为30 gwei。
-			// gasPrice := big.NewInt(30000000000) // in wei (30 gwei)
-
-			// 然而，燃气价格总是根据市场需求和用户愿意支付的价格而波动的，因此对燃气价格进行硬编码有时并不理想。 go-ethereum客户端提供SuggestGasPrice函数，用于根据'x'个先前块来获得平均燃气价格。
-			gasPrice, err := client.SuggestGasPrice(context.Background())
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			toAddress := common.HexToAddress("0x68dB32D26d9529B2a142927c6f1af248fc6Ba7e9") // ganache-cli
-			// toAddress := common.HexToAddress("0x028EA99Fe457B9Ad405883b9f501cab9a267150F") // ganache
-
-			fmt.Println("tx is:", nonce, fromAddress, value, gasLimit, gasPrice, toAddress)
-			// 导入go-ethereumcore/types包并调用NewTransaction来生成我们的未签名以太坊事务，这个函数需要接收nonce，地址，值，燃气上限值，燃气价格和可选发的数据。
-			// 发送ETH的数据字段为“nil”。 在与智能合约进行交互时，我们将使用数据字段，仅仅转账以太币是不需要数据字段的。
-			tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, nil)
-
-			// 下一步是使用发件人的私钥对事务进行签名。
-			// 为此，我们调用SignTx方法，该方法接受一个未签名的事务和我们之前构造的私钥。 SignTx方法需要EIP155签名者，这个也需要我们先从客户端拿到链ID。
-			chainID, err := client.NetworkID(context.Background())
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println(chainID)
-
-			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// 现在我们终于准备通过在客户端上调用“SendTransaction”来将已签名的事务广播到整个网络。
-			err = client.SendTransaction(context.Background(), signedTx)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fmt.Printf("tx sent: %s", signedTx.Hash().Hex()) // tx sent:
-		}
-
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(chapter3Cmd)
 
+	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo")
 	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "run block demo")
 	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "run transaction demo")
-	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo")
+
 	// chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
 }
