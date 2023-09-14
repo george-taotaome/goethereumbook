@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -122,6 +123,7 @@ var chapter4Cmd = &cobra.Command{
 
 		// 读取ERC20代币
 		if runERC20 {
+			// My Token/MTK address on ganache
 			tokenAddress := common.HexToAddress("0xC28614fEcD3109EFf192DD3cABc7ac9b82C7eD11")
 			instance, err := token.NewToken(tokenAddress, client)
 			if err != nil {
@@ -134,8 +136,32 @@ var chapter4Cmd = &cobra.Command{
 				log.Fatal("BalanceOf", err)
 			}
 
-			fmt.Printf("wei: %s\n", bal)
+			name, err := instance.Name(&bind.CallOpts{})
+			if err != nil {
+				log.Fatal(err)
+			}
 
+			symbol, err := instance.Symbol(&bind.CallOpts{})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			decimals, err := instance.Decimals(&bind.CallOpts{})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("name: %s\n", name)         // "name: Golem Network"
+			fmt.Printf("symbol: %s\n", symbol)     // "symbol: GNT"
+			fmt.Printf("decimals: %v\n", decimals) // "decimals: 18"
+
+			fmt.Printf("wei: %s\n", bal) // "wei: 74605500647408739782407023"
+
+			fbal := new(big.Float)
+			fbal.SetString(bal.String())
+			value := new(big.Float).Quo(fbal, big.NewFloat(math.Pow10(int(decimals))))
+
+			fmt.Printf("balance: %f", value)
 		}
 
 	},
