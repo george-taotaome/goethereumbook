@@ -19,6 +19,7 @@ import (
 	"yunlabs.com/goethereumbook/contracts/token"
 )
 
+var curAddress string
 var runLoad bool
 var runSetItem bool
 var runCodeAt bool
@@ -130,7 +131,7 @@ var chapter4Cmd = &cobra.Command{
 				log.Fatal("token", err)
 			}
 
-			address := common.HexToAddress("0xE280029a7867BA5C9154434886c241775ea87e53")
+			address := common.HexToAddress(curAddress)
 			bal, err := instance.BalanceOf(&bind.CallOpts{}, address)
 			if err != nil {
 				log.Fatal("BalanceOf", err)
@@ -169,6 +170,8 @@ var chapter4Cmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(chapter4Cmd)
+
+	chapter4Cmd.Flags().StringVarP(&curAddress, "address", "a", "0xE280029a7867BA5C9154434886c241775ea87e53", "account address")
 
 	chapter4Cmd.Flags().BoolVarP(&runLoad, "load", "l", false, "load contract and query version")
 	chapter4Cmd.Flags().BoolVarP(&runSetItem, "set", "s", false, "set item")

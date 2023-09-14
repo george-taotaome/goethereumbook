@@ -3,11 +3,14 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,8 +21,7 @@ var curBlock int64
 var runBlock bool
 var runTransaction bool
 var runTransfer bool
-
-// var runTransferToken bool
+var runTransferToken bool
 
 // Transaction
 var chapter3Cmd = &cobra.Command{
@@ -219,6 +221,85 @@ var chapter3Cmd = &cobra.Command{
 			fmt.Println(isPending) // false
 		}
 
+		// ERC20 Token转账
+		if runTransferToken {
+			privateKey, err := crypto.HexToECDSA("f1b3f8e0d52caec13491368449ab8d90f3d222a3e485aa7f02591bbceb5efba5")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			publicKey := privateKey.Public()
+			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+			if !ok {
+				log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+			}
+
+			fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+			nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			value := big.NewInt(0) // in wei (0 eth)
+			gasPrice, err := client.SuggestGasPrice(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			toAddress := common.HexToAddress("0x35bb6eF95c72bf4804334BB9d6A3c77Bef18d81B")
+			tokenAddress := common.HexToAddress("0xC28614fEcD3109EFf192DD3cABc7ac9b82C7eD11")
+
+			transferFnSignature := []byte("transfer(address,uint256)")
+			// hash := sha3.NewKeccak256()
+			// hash.Write(transferFnSignature)
+			// methodID := hash.Sum(nil)[:4]
+			hash := crypto.Keccak256(transferFnSignature)
+			methodID := hex.EncodeToString(hash[:4])
+			fmt.Println("methodID", hexutil.Encode([]byte(methodID)))
+
+			paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
+			fmt.Println("paddedAddress", hexutil.Encode(paddedAddress))
+
+			amount := new(big.Int)
+			amount.SetString("1000000000000000000000", 10) // 1000 tokens
+			paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+			fmt.Println("paddedAmount", hexutil.Encode(paddedAmount)) // 0x00000000000000000000000000000000000000000000003635c9adc5dea00000
+
+			var data []byte
+			data = append(data, methodID...)
+			data = append(data, paddedAddress...)
+			data = append(data, paddedAmount...)
+
+			gasLimit, err := client.EstimateGas(context.Background(), ethereum.CallMsg{
+				To:   &toAddress,
+				Data: data,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(gasLimit) // 23256
+
+			tx := types.NewTransaction(nonce, tokenAddress, value, gasLimit, gasPrice, data)
+
+			chainID, err := client.NetworkID(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			err = client.SendTransaction(context.Background(), signedTx)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("tx sent: %s", signedTx.Hash().Hex())
+
+		}
+
 	},
 }
 
@@ -230,6 +311,5 @@ func init() {
 	chapter3Cmd.Flags().BoolVarP(&runTransfer, "transfer", "r", false, "run transfer demo, generate block 1")
 	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "get block 1 info")
 	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "get transaction info from block 1")
-
-	// chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
+	chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
 }
