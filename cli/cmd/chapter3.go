@@ -32,7 +32,6 @@ var chapter3Cmd = &cobra.Command{
 	Short: "Demo code for chapter 3: 交易",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		// client, err := ethclient.Dial("https://cloudflare-eth.com")
 		client, err := ethclient.Dial("http://localhost:8545")
 		if err != nil {
 			log.Fatal(err)

@@ -42,7 +42,6 @@ var chapter2Cmd = &cobra.Command{
 		// 	fmt.Printf("Non-flag argument: %s\n", arg)
 		// }
 
-		// client, err := ethclient.Dial("https://cloudflare-eth.com")
 		client, err := ethclient.Dial("http://localhost:8545")
 		if err != nil {
 			log.Fatal(err)
