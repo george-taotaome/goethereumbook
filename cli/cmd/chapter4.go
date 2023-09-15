@@ -85,7 +85,7 @@ var chapter4Cmd = &cobra.Command{
 			auth.GasLimit = uint64(300000) // in units
 			auth.GasPrice = gasPrice
 
-			address := common.HexToAddress("0x2e144aF3Bde9B518C7C65FBE170c07c888f1fF1a")
+			address := common.HexToAddress("0xC28614fEcD3109EFf192DD3cABc7ac9b82C7eD11")
 			instance, err := store.NewStore(address, client)
 			if err != nil {
 				log.Fatal(err)
@@ -113,7 +113,7 @@ var chapter4Cmd = &cobra.Command{
 
 		// 读取智能合约的字节码
 		if runCodeAt {
-			contractAddress := common.HexToAddress("0x2e144aF3Bde9B518C7C65FBE170c07c888f1fF1a")
+			contractAddress := common.HexToAddress("0xC28614fEcD3109EFf192DD3cABc7ac9b82C7eD11")
 			bytecode, err := client.CodeAt(context.Background(), contractAddress, nil) // nil is latest block
 			if err != nil {
 				log.Fatal(err)

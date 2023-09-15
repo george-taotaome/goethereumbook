@@ -10,8 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	// "yunlabs.com/goethereumbook/contracts/store"
+	"yunlabs.com/goethereumbook/contracts/store"
 	"yunlabs.com/goethereumbook/contracts/token"
 )
 
@@ -60,12 +59,18 @@ func main() {
 	auth.GasLimit = uint64(300000) // in units, for Store
 	auth.GasPrice = gasPrice
 
-	// input := "1.0"
-	// address, tx, instance, err := store.DeployStore(auth, client, input)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	// Deploy Store contract
+	input := "1.0"
+	saddress, stx, sInstance, err := store.DeployStore(auth, client, input)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	fmt.Println("Deplay Store contract successfully")
+	fmt.Println(saddress.Hex())
+	fmt.Println(stx.Hash().Hex())
+
+	// Deploy ERC20 contract
 	auth.GasLimit = uint64(3000000) // in units，增加gas限额 for erc20, 6.1K需要多点gas
 
 	name := "My Token"
@@ -77,8 +82,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(address.Hex())   // 0xf3585FCD969502624c6A8ACf73721d1fce214E83
-	fmt.Println(tx.Hash().Hex()) // 0x79c08b3f9d93712f6fbe92975191eb4f856ac8a7b42cc2aa21e5da9104d7bce5
+	fmt.Println("Deplay ERC20 contract successfully")
+	fmt.Println(address.Hex())
+	fmt.Println(tx.Hash().Hex())
 
+	_ = sInstance
 	_ = instance
 }
