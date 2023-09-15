@@ -41,7 +41,7 @@ $ git push -u origin main
 # chapter 1
 $ go get github.com/ethereum/go-ethereum/ethclient
 $ cd cli && cobra-cli add chapter1
-$ go run cli/main.go chapter1
+$ cd .. && go run cli/main.go chapter1
 
 ...
 
