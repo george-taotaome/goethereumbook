@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
@@ -14,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +22,9 @@ var runBlock bool
 var runTransaction bool
 var runTransfer bool
 var runTransferToken bool
+var runSubscribe bool
+var runRawTransaction bool
+var runSendRawTransaction bool
 
 // Transaction
 var chapter3Cmd = &cobra.Command{
@@ -159,7 +162,7 @@ var chapter3Cmd = &cobra.Command{
 				fmt.Println(tx.Data())
 				fmt.Println(tx.To().Hex())
 
-				chainID, err := client.NetworkID(context.Background())
+				chainID, err := client.ChainID(context.Background())
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -254,8 +257,8 @@ var chapter3Cmd = &cobra.Command{
 			// hash.Write(transferFnSignature)
 			// methodID := hash.Sum(nil)[:4]
 			hash := crypto.Keccak256(transferFnSignature)
-			methodID := hex.EncodeToString(hash[:4])
-			fmt.Println("methodID", hexutil.Encode([]byte(methodID)))
+			methodID := hash[:4]
+			fmt.Println("methodID", hexutil.Encode(methodID))
 
 			paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
 			fmt.Println("paddedAddress", hexutil.Encode(paddedAddress))
@@ -277,11 +280,12 @@ var chapter3Cmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(gasLimit) // 23256
+			fmt.Println("gasLimit", gasLimit) // 23256
 
 			tx := types.NewTransaction(nonce, tokenAddress, value, gasLimit, gasPrice, data)
 
-			chainID, err := client.NetworkID(context.Background())
+			// chainID, err := client.NetworkID(context.Background())
+			chainID, err := client.ChainID(context.Background())
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -297,9 +301,115 @@ var chapter3Cmd = &cobra.Command{
 			}
 
 			fmt.Printf("tx sent: %s", signedTx.Hash().Hex())
-
 		}
 
+		// 订阅，有新block时，打印出来
+		if runSubscribe {
+			client, err := ethclient.Dial("ws://localhost:8545")
+			if err != nil {
+				log.Fatal("client ", err)
+			}
+
+			headers := make(chan *types.Header)
+			sub, err := client.SubscribeNewHead(context.Background(), headers)
+			if err != nil {
+				log.Fatal("sub ", err)
+			}
+
+			for {
+				select {
+				case err := <-sub.Err():
+					log.Fatal("Err ", err)
+				case header := <-headers:
+					fmt.Println(header.Hash().Hex())
+
+					block, err := client.BlockByHash(context.Background(), header.Hash())
+					if err != nil {
+						log.Fatal("block ", err)
+					}
+
+					fmt.Println(block.Hash().Hex())
+					fmt.Println(block.Number().Uint64())
+					fmt.Println(block.Time())
+					fmt.Println(block.Nonce())
+					fmt.Println(len(block.Transactions()))
+				}
+			}
+		}
+
+		// 创建原始交易事务
+		if runRawTransaction {
+			privateKey, err := crypto.HexToECDSA("f1b3f8e0d52caec13491368449ab8d90f3d222a3e485aa7f02591bbceb5efba5")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			publicKey := privateKey.Public()
+			publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+			if !ok {
+				log.Fatal("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+			}
+
+			fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+			nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			value := big.NewInt(1000000000000000000) // in wei (1 eth)
+			gasLimit := uint64(21000)                // in units
+			gasPrice, err := client.SuggestGasPrice(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			toAddress := common.HexToAddress("0x35bb6eF95c72bf4804334BB9d6A3c77Bef18d81B")
+			var data []byte
+			tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
+
+			chainID, err := client.ChainID(context.Background())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// 通过交易获取发送者地址 发送方的地址是从交易的签名中恢复出来的
+			signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// ts := types.Transactions{signedTx}
+			// rawTxBytes := ts.GetRlp(0) // GetRlp方法已经被弃用
+			// rawTxHex := hex.EecodeString(rawTxBytes)
+
+			// 将交易编码为RLP字节
+			rawTxBytes, err := rlp.EncodeToBytes(signedTx)
+			if err != nil {
+				log.Fatal("编码交易为RLP出错:", err)
+			}
+
+			fmt.Printf("编码后的交易RLP字节: %x\n", rawTxBytes)
+		}
+
+		// 发送原始交易事务
+		if runSendRawTransaction {
+			rawTx := "0xf86d0484773594008252089435bb6ef95c72bf4804334bb9d6a3c77bef18d81b880de0b6b3a764000080820a95a07cb14afc640715ac92d055cfc9edbc38558ed415844c39402824f1636d3024b9a07c79acbb9821ff982c87e37a7b99d5fa936bffe8d6a170510454e14a1660269b"
+
+			rawTxBytes, err := hexutil.Decode(rawTx)
+			if err != nil {
+				log.Fatal("rawTxBytes: ", err)
+			}
+
+			tx := new(types.Transaction)
+			rlp.DecodeBytes(rawTxBytes, &tx)
+
+			err = client.SendTransaction(context.Background(), tx)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Printf("tx sent: %s", tx.Hash().Hex())
+		}
 	},
 }
 
@@ -312,4 +422,7 @@ func init() {
 	chapter3Cmd.Flags().BoolVarP(&runBlock, "block", "b", false, "get block 1 info")
 	chapter3Cmd.Flags().BoolVarP(&runTransaction, "transaction", "t", false, "get transaction info from block 1")
 	chapter3Cmd.Flags().BoolVarP(&runTransferToken, "transferToken", "o", false, "run transfer token demo")
+	chapter3Cmd.Flags().BoolVarP(&runSubscribe, "subscribe", "s", false, "run subscribe demo")
+	chapter3Cmd.Flags().BoolVarP(&runRawTransaction, "rawTransaction", "w", false, "run raw transaction demo")
+	chapter3Cmd.Flags().BoolVarP(&runSendRawTransaction, "sendRawTransaction", "e", false, "run send raw transaction demo")
 }
